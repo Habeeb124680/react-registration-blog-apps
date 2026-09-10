@@ -45,8 +45,8 @@ Post a short update, like posts, and delete posts you wrote yourself.
 ### Installation
 
 ```bash
-git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>
+git clone https://github.com/Habeeb124680/react-registration-blog-apps.git
+cd react-registration-blog-apps
 npm install
 ```
 
