@@ -74,7 +74,6 @@ function Home() {
           title="Student Registration App"
           description="Register students with a name and course, list them, and remove entries."
           tags={["Forms", "useState", "arrays", ".map()"]}
-          status="Built"
         />
         <ProjectCard
           to="/blog"
@@ -82,24 +81,17 @@ function Home() {
           title="Blog App (like Twitter)"
           description="Post short updates, like them, and delete your own posts. Backed by a real Django API."
           tags={["Django API", "JWT auth", "fetch", "useEffect"]}
-          status="Built"
         />
       </div>
     </div>
   );
 }
 
-function ProjectCard({ to, icon: Icon, title, description, tags, status }) {
-  const built = status === "Built";
+function ProjectCard({ to, icon: Icon, title, description, tags }) {
   return (
     <Link to={to} className="project-card">
-      <div className="project-card-top">
-        <div className="project-icon">
-          <Icon size={19} strokeWidth={2} />
-        </div>
-        <span className={`status-badge ${built ? "built" : "upcoming"}`}>
-          {status}
-        </span>
+      <div className="project-icon">
+        <Icon size={19} strokeWidth={2} />
       </div>
       <h3 className="project-title">{title}</h3>
       <p className="project-desc">{description}</p>
@@ -123,7 +115,7 @@ function ProjectCard({ to, icon: Icon, title, description, tags, status }) {
 // -----------------------------------------------------------------------
 function StudentRegistrationApp() {
   const [students, setStudents] = useState([
-    { id: 1, name: "Amara Okafor", course: "Data Structures" },
+    { id: 1, name: "Habeeb Abdulazeez", course: "Full-Stack Development" },
     { id: 2, name: "Liam Chen", course: "Intro to React" },
   ]);
   const [name, setName] = useState("");
@@ -226,12 +218,19 @@ function AuthForm({ onAuthed }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+
+    if (mode === "register" && password !== confirmPassword) {
+      setError("Passwords don't match.");
+      return;
+    }
+
     setLoading(true);
     try {
       const data =
@@ -251,14 +250,20 @@ function AuthForm({ onAuthed }) {
       <div className="auth-tabs">
         <button
           className={`auth-tab${mode === "login" ? " active" : ""}`}
-          onClick={() => setMode("login")}
+          onClick={() => {
+            setMode("login");
+            setError("");
+          }}
           type="button"
         >
           Log in
         </button>
         <button
           className={`auth-tab${mode === "register" ? " active" : ""}`}
-          onClick={() => setMode("register")}
+          onClick={() => {
+            setMode("register");
+            setError("");
+          }}
           type="button"
         >
           Sign up
@@ -293,6 +298,17 @@ function AuthForm({ onAuthed }) {
           required
           minLength={6}
         />
+        {mode === "register" && (
+          <input
+            type="password"
+            placeholder="Confirm password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="form-input"
+            required
+            minLength={6}
+          />
+        )}
         {error && <p className="auth-error">{error}</p>}
         <button type="submit" className="form-submit" disabled={loading}>
           {loading ? "Please wait..." : mode === "login" ? "Log in" : "Create account"}

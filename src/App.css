@@ -140,6 +140,7 @@ a {
   color: var(--text-muted);
   margin: 0 0 2.5rem;
   line-height: 1.6;
+  overflow-wrap: break-word;
 }
 
 /* ---------- Project cards (Home) ---------- */
@@ -186,6 +187,7 @@ a {
   align-items: center;
   justify-content: center;
   color: var(--accent);
+  margin-bottom: 1.25rem;
 }
 
 .status-badge {
@@ -218,6 +220,7 @@ a {
   color: var(--text-muted);
   line-height: 1.6;
   margin: 0 0 1rem;
+  overflow-wrap: break-word;
 }
 
 .tag-list {
@@ -399,6 +402,7 @@ a {
   justify-content: space-between;
   padding: 0.875rem 1.25rem;
   border-bottom: 1px solid var(--border-soft);
+  gap: 0.75rem;
 }
 
 .student-row:last-child {
@@ -409,6 +413,7 @@ a {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .student-avatar {
@@ -429,6 +434,7 @@ a {
   font-weight: 500;
   color: var(--text-dark);
   margin: 0;
+  overflow-wrap: break-word;
 }
 
 .student-course {
@@ -556,6 +562,8 @@ a {
   color: var(--text-dark);
   line-height: 1.55;
   margin: 0 0 0.875rem;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .post-actions {
@@ -673,4 +681,87 @@ a {
   font-size: 0.8125rem;
   color: var(--coral);
   margin: 0;
+}
+
+/* =========================================================================
+   Responsive layout
+   Default styles above are written for desktop. These media queries
+   override them for smaller screens, from tablet width down to phones.
+   ========================================================================= */
+
+/* Tablet and small laptop: sidebar goes from a tall left column to a
+   horizontal bar across the top, and content padding tightens up. */
+@media (max-width: 860px) {
+  .app-shell {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+    overflow-x: auto;
+  }
+
+  .sidebar-header {
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  .sidebar-subtitle {
+    display: none; /* redundant once space is tight */
+  }
+
+  .sidebar-nav {
+    flex: 0 0 auto;
+    flex-direction: row;
+    padding: 0;
+    gap: 0.375rem;
+  }
+
+  .sidebar-item {
+    white-space: nowrap;
+  }
+
+  .sidebar-footer {
+    display: none; /* decorative only, first thing to drop */
+  }
+
+  .main-content {
+    padding: 1.5rem;
+  }
+}
+
+/* Phones: tighten further, shrink headings, stack the login form's tabs
+   and the composer's footer if they'd otherwise feel cramped. */
+@media (max-width: 480px) {
+  .main-content {
+    padding: 1rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .page-header-title {
+    font-size: 1.25rem;
+  }
+
+  .form-card,
+  .blog-composer,
+  .auth-card {
+    padding: 1rem;
+  }
+
+  .sidebar-item {
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.625rem;
+  }
+
+  .sidebar-title {
+    font-size: 0.9375rem;
+  }
 }
