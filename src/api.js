@@ -69,3 +69,24 @@ export function deletePost(postId, token) {
     headers: authHeaders(token),
   }).then(handle);
 }
+
+export function fetchComments(postId, token) {
+  return fetch(`${API_URL}/posts/${postId}/comments`, {
+    headers: authHeaders(token),
+  }).then(handle);
+}
+
+export function createComment(postId, text, token) {
+  return fetch(`${API_URL}/posts/${postId}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    body: JSON.stringify({ text }),
+  }).then(handle);
+}
+
+export function deleteComment(commentId, token) {
+  return fetch(`${API_URL}/comments/${commentId}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  }).then(handle);
+}

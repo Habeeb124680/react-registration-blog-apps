@@ -14,8 +14,20 @@ import {
   Heart,
   Send,
   LogOut,
+  Eye,
+  EyeOff,
 } from "lucide-react";
-import { registerUser, loginUser, fetchPosts, createPost, toggleLike, deletePost } from "./api";
+import {
+  registerUser,
+  loginUser,
+  fetchPosts,
+  createPost,
+  toggleLike,
+  deletePost,
+  fetchComments,
+  createComment,
+  deleteComment,
+} from "./api";
 
 // -----------------------------------------------------------------------
 // Sidebar
@@ -211,6 +223,39 @@ function StudentRegistrationApp() {
 }
 
 // -----------------------------------------------------------------------
+// Password input with a show/hide (eye) button
+// -----------------------------------------------------------------------
+function PasswordInput({ value, onChange, placeholder, autoComplete }) {
+  // Each field keeps its own "visible?" state, so you can reveal one
+  // without revealing the other.
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className="password-field">
+      <input
+        type={visible ? "text" : "password"}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        autoComplete={autoComplete}
+        className="form-input"
+        required
+        minLength={6}
+      />
+      <button
+        type="button" /* "button" so clicking it never submits the form */
+        onClick={() => setVisible((v) => !v)}
+        className="password-toggle"
+        aria-label={visible ? "Hide password" : "Show password"}
+        aria-pressed={visible}
+      >
+        {visible ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------
 // Auth form — used inside the Blog App when you're not logged in
 // -----------------------------------------------------------------------
 function AuthForm({ onAuthed }) {
@@ -289,24 +334,18 @@ function AuthForm({ onAuthed }) {
           className="form-input"
           required
         />
-        <input
-          type="password"
+        <PasswordInput
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="form-input"
-          required
-          minLength={6}
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
         />
         {mode === "register" && (
-          <input
-            type="password"
+          <PasswordInput
             placeholder="Confirm password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="form-input"
-            required
-            minLength={6}
+            autoComplete="new-password"
           />
         )}
         {error && <p className="auth-error">{error}</p>}
@@ -314,6 +353,120 @@ function AuthForm({ onAuthed }) {
           {loading ? "Please wait..." : mode === "login" ? "Log in" : "Create account"}
         </button>
       </form>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------
+// Comments under a single post
+// -----------------------------------------------------------------------
+function CommentSection({ postId, auth, token, onCountChange }) {
+  const [comments, setComments] = useState([]);
+  const [draft, setDraft] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
+  // Runs when the section first opens (this component only exists while a
+  // post's comments are expanded), and again if you log in or out.
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetchComments(postId, token)
+      .then((data) => {
+        if (!cancelled) setComments(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [postId, token]);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!draft.trim() || sending) return;
+    setSending(true);
+    setError("");
+    try {
+      const created = await createComment(postId, draft.trim(), token);
+      setComments((prev) => [...prev, created]); // oldest first, so add to the end
+      setDraft("");
+      onCountChange(postId, 1);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleDelete(commentId) {
+    try {
+      await deleteComment(commentId, token);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      onCountChange(postId, -1);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  return (
+    <div className="comments">
+      {loading ? (
+        <p className="comments-note">Loading comments...</p>
+      ) : comments.length === 0 ? (
+        <p className="comments-note">No comments yet.</p>
+      ) : (
+        comments.map((comment) => (
+          <div key={comment.id} className="comment">
+            <div className="comment-avatar">
+              {comment.author.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="comment-body">
+              <span className="comment-author">{comment.author.name}</span>
+              <p className="comment-text">{comment.text}</p>
+            </div>
+            {comment.is_own && (
+              <button
+                onClick={() => handleDelete(comment.id)}
+                className="delete-btn comment-delete"
+                aria-label="Delete comment"
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
+          </div>
+        ))
+      )}
+
+      {error && <p className="auth-error">{error}</p>}
+
+      {auth ? (
+        <form onSubmit={handleSubmit} className="comment-form">
+          <input
+            type="text"
+            placeholder="Write a comment..."
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            maxLength={500}
+            className="form-input"
+          />
+          <button
+            type="submit"
+            className="form-submit"
+            disabled={!draft.trim() || sending}
+            aria-label="Send comment"
+          >
+            <Send size={13} />
+          </button>
+        </form>
+      ) : (
+        <p className="comments-note">Log in to join the conversation.</p>
+      )}
     </div>
   );
 }
@@ -333,6 +486,9 @@ function BlogApp() {
   const [error, setError] = useState("");
 
   const token = auth?.access_token;
+
+  // Which posts currently have their comments expanded: { [postId]: true }
+  const [openComments, setOpenComments] = useState({});
 
   useEffect(() => {
     let cancelled = false;
@@ -390,6 +546,20 @@ function BlogApp() {
     } catch (err) {
       setError(err.message);
     }
+  }
+
+  function toggleComments(postId) {
+    setOpenComments((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  }
+
+  // CommentSection tells us when a comment is added (+1) or removed (-1)
+  // so the count on the post's button stays accurate without refetching.
+  function handleCommentCountChange(postId, delta) {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId ? { ...p, comment_count: p.comment_count + delta } : p
+      )
+    );
   }
 
   return (
@@ -465,6 +635,15 @@ function BlogApp() {
                   <Heart size={14} fill={post.liked_by_me ? "currentColor" : "none"} />
                   {post.like_count}
                 </button>
+                <button
+                  onClick={() => toggleComments(post.id)}
+                  className={`like-btn comment-btn${openComments[post.id] ? " open" : ""}`}
+                  aria-expanded={!!openComments[post.id]}
+                  aria-label="Show comments"
+                >
+                  <MessageCircle size={14} />
+                  {post.comment_count}
+                </button>
                 {post.is_own && (
                   <button
                     onClick={() => handleDelete(post.id)}
@@ -475,6 +654,14 @@ function BlogApp() {
                   </button>
                 )}
               </div>
+              {openComments[post.id] && (
+                <CommentSection
+                  postId={post.id}
+                  auth={auth}
+                  token={token}
+                  onCountChange={handleCommentCountChange}
+                />
+              )}
             </div>
           ))}
         </div>

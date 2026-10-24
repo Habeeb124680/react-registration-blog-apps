@@ -765,3 +765,202 @@ a {
     font-size: 0.9375rem;
   }
 }
+
+/* =========================================================================
+   Comments  (paste at the very END of App.css)
+   ========================================================================= */
+.comment-btn:hover,
+.comment-btn.open {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.comments {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.comments-note {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+.comment-avatar {
+  width: 1.625rem;
+  height: 1.625rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0; /* lets long words wrap instead of stretching the row */
+  background: var(--bg);
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.comment-author {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.comment-text {
+  font-size: 0.875rem;
+  color: var(--text-dark);
+  line-height: 1.5;
+  margin: 0.125rem 0 0;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.comment-delete {
+  opacity: 1;
+  padding: 0.375rem;
+  flex-shrink: 0;
+}
+
+.comment-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.comment-form .form-input {
+  min-width: 0; /* an input's default minimum width can overflow narrow cards */
+}
+
+.comment-form .form-submit {
+  padding: 0.625rem 0.875rem;
+  flex-shrink: 0;
+}
+
+/* =========================================================================
+   Extra responsive rules  (also paste at the very END of App.css)
+   ========================================================================= */
+
+/* Phones */
+@media (max-width: 480px) {
+  .blog-post {
+    padding: 1rem;
+  }
+
+  .comments {
+    gap: 0.625rem;
+  }
+
+  .comment {
+    gap: 0.5rem;
+  }
+
+  .comment-body {
+    padding: 0.5rem 0.625rem;
+  }
+
+  /* The 3rem left indent lines the text up with the title on desktop, but
+     wastes a lot of width on a phone. */
+  .page-header-desc {
+    margin-left: 0;
+  }
+}
+
+/* Touch screens (phones and tablets): there is no mouse hover, so anything
+   that only appears on hover must always be visible, and tap targets need
+   to be big enough for a finger. */
+@media (hover: none) {
+  .delete-btn {
+    opacity: 1; /* student delete buttons were hidden until hover */
+  }
+}
+
+@media (pointer: coarse) {
+  .like-btn {
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .delete-btn {
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
+
+  /* iPhones zoom the whole page when you focus an input whose text is
+     smaller than 16px. 1rem is 16px, so this stops that. */
+  .form-input,
+  .blog-textarea {
+    font-size: 1rem;
+  }
+}
+
+/* =========================================================================
+   Password show/hide (eye) button  (paste at the very END of App.css,
+   after the comments / responsive block)
+   ========================================================================= */
+.password-field {
+  position: relative;
+  display: flex;
+}
+
+.password-field .form-input {
+  width: 100%;
+  min-width: 0;
+  padding-right: 2.75rem; /* keeps typed text from running under the eye */
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.375rem;
+  transform: translateY(-50%);
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0.375rem;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.password-toggle:hover {
+  color: var(--text-dark);
+  background: var(--bg);
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Bigger tap target on touch screens */
+@media (pointer: coarse) {
+  .password-toggle {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .password-field .form-input {
+    padding-right: 3rem;
+  }
+}
