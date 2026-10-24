@@ -328,7 +328,7 @@ a {
   border-radius: 0.5rem;
   border: 1px solid var(--border);
   font-size: 0.875rem;
-  color: var(--text-dark);
+  color: var(--bg);
 }
 
 .form-input::placeholder {
