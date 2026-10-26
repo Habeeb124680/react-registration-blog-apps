@@ -981,10 +981,7 @@ a {
   font-size: 0.6875rem;
   color: var(--text-faint);
 }
-input{
-  background-color: #fff !important;
-  color: var(--text-dark) !important;
-}
+
 .post-meta .edited-tag {
   margin-left: 0;
 }
@@ -1131,18 +1128,98 @@ input{
 }
 
 /* =========================================================================
-   Keep text boxes readable in dark mode
-   The app is a light design. If the browser or phone is in dark mode, text
-   boxes without an explicit background turn dark while our text color stays
-   dark, which makes typed text invisible. Fix: tell the browser this page is
-   light, and give the boxes an explicit white background.
+   Global form-control visibility fix
+   Keep every input, textarea, and select readable, including focus,
+   browser autofill, password fields, and comment/edit forms.
    ========================================================================= */
+
 :root {
   color-scheme: light;
 }
 
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+input,
+textarea,
+select,
 .form-input,
 .blog-textarea {
-  background: #fff;
+  background-color: #fff !important;
+  color: var(--text-dark) !important;
+  -webkit-text-fill-color: var(--text-dark) !important;
+  caret-color: var(--accent);
+  opacity: 1;
+}
+
+input::placeholder,
+textarea::placeholder,
+.form-input::placeholder,
+.blog-textarea::placeholder {
+  color: #85858d !important;
+  -webkit-text-fill-color: #85858d !important;
+  opacity: 1;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.form-input:focus,
+.blog-textarea:focus {
+  background-color: #fff !important;
+  color: var(--text-dark) !important;
+  -webkit-text-fill-color: var(--text-dark) !important;
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91, 91, 214, 0.15);
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background-color: #f0efec !important;
+  color: var(--text-muted) !important;
+  -webkit-text-fill-color: var(--text-muted) !important;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+/* Chrome and Safari autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--text-dark) !important;
+  caret-color: var(--accent);
+  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+}
+
+/* Password fields and show/hide controls */
+.password-field .form-input {
+  width: 100%;
+  min-width: 0;
+  background-color: #fff !important;
+  color: var(--text-dark) !important;
+  -webkit-text-fill-color: var(--text-dark) !important;
+}
+
+/* Post and comment editors */
+.inline-editor .blog-textarea,
+.comment-form .form-input {
+  background-color: #fff !important;
+  color: var(--text-dark) !important;
+  -webkit-text-fill-color: var(--text-dark) !important;
+}
+
+/* Respect readable text in native dropdown menus */
+select,
+select option {
+  background-color: #fff;
   color: var(--text-dark);
 }
