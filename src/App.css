@@ -328,7 +328,7 @@ a {
   border-radius: 0.5rem;
   border: 1px solid var(--border);
   font-size: 0.875rem;
-  color: var(--bg);
+  color: var(--text-dark);
 }
 
 .form-input::placeholder {
@@ -981,7 +981,10 @@ a {
   font-size: 0.6875rem;
   color: var(--text-faint);
 }
-
+input{
+  background-color: #fff !important;
+  color: var(--text-dark) !important;
+}
 .post-meta .edited-tag {
   margin-left: 0;
 }
@@ -1125,4 +1128,21 @@ a {
   .options-item {
     min-height: 2.5rem;
   }
+}
+
+/* =========================================================================
+   Keep text boxes readable in dark mode
+   The app is a light design. If the browser or phone is in dark mode, text
+   boxes without an explicit background turn dark while our text color stays
+   dark, which makes typed text invisible. Fix: tell the browser this page is
+   light, and give the boxes an explicit white background.
+   ========================================================================= */
+:root {
+  color-scheme: light;
+}
+
+.form-input,
+.blog-textarea {
+  background: #fff;
+  color: var(--text-dark);
 }
