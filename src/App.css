@@ -328,7 +328,7 @@ a {
   border-radius: 0.5rem;
   border: 1px solid var(--border);
   font-size: 0.875rem;
-  color: var(--text-dark);
+  color: var(--bg);
 }
 
 .form-input::placeholder {
@@ -962,5 +962,167 @@ a {
 
   .password-field .form-input {
     padding-right: 3rem;
+  }
+}
+
+/* =========================================================================
+   Post/comment text alignment, "edited" tag, three-dot menu, inline editor
+   ========================================================================= */
+
+/* Your page can inherit text-align: center from the Vite starter styles
+   (the #root rule in index.css). Posts, comments and menus set their own
+   alignment so they always read left to right. */
+.blog-post {
+  text-align: left;
+}
+
+.edited-tag {
+  margin-left: 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--text-faint);
+}
+
+.post-meta .edited-tag {
+  margin-left: 0;
+}
+
+/* ---------- Three-dot menu ---------- */
+.options {
+  position: relative;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.options-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.options-trigger:hover,
+.options-trigger[aria-expanded="true"] {
+  color: var(--text-dark);
+  background: var(--bg);
+}
+
+.options-trigger:focus-visible,
+.options-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.options-menu {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 20;
+  min-width: 8.5rem;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(28, 29, 33, 0.1);
+}
+
+.options-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--text-dark);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.options-item:hover {
+  background: var(--bg);
+}
+
+.options-item.danger {
+  color: var(--coral);
+}
+
+.options-item.danger:hover {
+  background: var(--coral-soft);
+}
+
+/* ---------- Inline editor (shown while editing a post or comment) ---------- */
+.inline-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0.875rem;
+}
+
+.comment-body .inline-editor {
+  margin-bottom: 0.25rem;
+}
+
+.inline-editor .blog-textarea {
+  background: #fff;
+}
+
+.inline-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.inline-editor-actions .char-count {
+  margin-right: auto;
+}
+
+.inline-editor-actions .form-submit,
+.btn-secondary {
+  padding: 0.5rem 0.875rem;
+}
+
+.btn-secondary {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: #fff;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  color: var(--text-dark);
+  border-color: var(--text-faint);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Bigger tap targets on touch screens */
+@media (pointer: coarse) {
+  .options-trigger {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .options-item {
+    min-height: 2.5rem;
   }
 }

@@ -1,5 +1,5 @@
 import "./App.css";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Routes, Route, Link, NavLink, useNavigate } from "react-router-dom";
 import {
   GraduationCap,
@@ -16,6 +16,7 @@ import {
   LogOut,
   Eye,
   EyeOff,
+  Pencil,
 } from "lucide-react";
 import {
   registerUser,
@@ -27,6 +28,8 @@ import {
   fetchComments,
   createComment,
   deleteComment,
+  updatePost,
+  updateComment,
 } from "./api";
 
 // -----------------------------------------------------------------------
@@ -358,6 +361,168 @@ function AuthForm({ onAuthed }) {
 }
 
 // -----------------------------------------------------------------------
+// Three-dot menu (Edit / Delete), used on your own posts and comments
+// -----------------------------------------------------------------------
+function DotsIcon() {
+  // Drawn by hand so it doesn't depend on which icon names your installed
+  // version of lucide-react happens to have.
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="5" cy="12" r="2" />
+      <circle cx="12" cy="12" r="2" />
+      <circle cx="19" cy="12" r="2" />
+    </svg>
+  );
+}
+
+function OptionsMenu({ label, onEdit, onDelete }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  // While the menu is open, close it when you click or tap anywhere outside
+  // it, or press Escape. The listeners are removed again when it closes.
+  useEffect(() => {
+    if (!open) return;
+
+    function handlePointerDown(e) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    function handleKeyDown(e) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  function choose(action) {
+    setOpen(false);
+    action();
+  }
+
+  return (
+    <div className="options" ref={wrapperRef}>
+      <button
+        type="button"
+        ref={triggerRef}
+        className="options-trigger"
+        onClick={() => setOpen((o) => !o)}
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <DotsIcon />
+      </button>
+      {open && (
+        <div className="options-menu" role="menu">
+          <button
+            type="button"
+            role="menuitem"
+            className="options-item"
+            onClick={() => choose(onEdit)}
+          >
+            <Pencil size={14} />
+            Edit
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="options-item danger"
+            onClick={() => choose(onDelete)}
+          >
+            <Trash2 size={14} />
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------
+// Inline editor: swaps in for a post's or comment's text while you edit it
+// -----------------------------------------------------------------------
+function InlineEditor({ initialValue, maxLength, rows, onSave, onCancel }) {
+  const [value, setValue] = useState(initialValue);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const textareaRef = useRef(null);
+
+  // Focus the box and put the cursor at the end when the editor opens.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (el) {
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    }
+  }, []);
+
+  const unchanged = value.trim() === initialValue.trim();
+  const canSave = value.trim() !== "" && !unchanged && !saving;
+
+  async function handleSave() {
+    if (!canSave) return;
+    setSaving(true);
+    setError("");
+    try {
+      // onSave throws if the server rejects the edit. On success the parent
+      // closes this editor, so there is nothing left to reset here.
+      await onSave(value.trim());
+    } catch (err) {
+      setError(err.message);
+      setSaving(false);
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      onCancel();
+    } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSave();
+    }
+  }
+
+  return (
+    <div className="inline-editor">
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        maxLength={maxLength}
+        rows={rows}
+        className="blog-textarea"
+        aria-label="Edit text"
+      />
+      {error && <p className="auth-error">{error}</p>}
+      <div className="inline-editor-actions">
+        <span className="char-count">
+          {value.length}/{maxLength}
+        </span>
+        <button type="button" className="btn-secondary" onClick={onCancel} disabled={saving}>
+          Cancel
+        </button>
+        <button type="button" className="form-submit" onClick={handleSave} disabled={!canSave}>
+          {saving ? "Saving..." : "Save"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------
 // Comments under a single post
 // -----------------------------------------------------------------------
 function CommentSection({ postId, auth, token, onCountChange }) {
@@ -366,6 +531,7 @@ function CommentSection({ postId, auth, token, onCountChange }) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState(null); // which comment is being edited
 
   // Runs when the section first opens (this component only exists while a
   // post's comments are expanded), and again if you log in or out.
@@ -404,6 +570,13 @@ function CommentSection({ postId, auth, token, onCountChange }) {
     }
   }
 
+  // Throws on failure so the editor can show the error and stay open.
+  async function handleEdit(commentId, text) {
+    const updated = await updateComment(commentId, text, token);
+    setComments((prev) => prev.map((c) => (c.id === commentId ? updated : c)));
+    setEditingId(null);
+  }
+
   async function handleDelete(commentId) {
     try {
       await deleteComment(commentId, token);
@@ -428,16 +601,25 @@ function CommentSection({ postId, auth, token, onCountChange }) {
             </div>
             <div className="comment-body">
               <span className="comment-author">{comment.author.name}</span>
-              <p className="comment-text">{comment.text}</p>
+              {comment.edited && <span className="edited-tag">edited</span>}
+              {editingId === comment.id ? (
+                <InlineEditor
+                  initialValue={comment.text}
+                  maxLength={500}
+                  rows={2}
+                  onSave={(text) => handleEdit(comment.id, text)}
+                  onCancel={() => setEditingId(null)}
+                />
+              ) : (
+                <p className="comment-text">{comment.text}</p>
+              )}
             </div>
-            {comment.is_own && (
-              <button
-                onClick={() => handleDelete(comment.id)}
-                className="delete-btn comment-delete"
-                aria-label="Delete comment"
-              >
-                <Trash2 size={13} />
-              </button>
+            {comment.is_own && editingId !== comment.id && (
+              <OptionsMenu
+                label="Comment options"
+                onEdit={() => setEditingId(comment.id)}
+                onDelete={() => handleDelete(comment.id)}
+              />
             )}
           </div>
         ))
@@ -489,6 +671,9 @@ function BlogApp() {
 
   // Which posts currently have their comments expanded: { [postId]: true }
   const [openComments, setOpenComments] = useState({});
+
+  // Which post is being edited right now (only one at a time)
+  const [editingPostId, setEditingPostId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -546,6 +731,13 @@ function BlogApp() {
     } catch (err) {
       setError(err.message);
     }
+  }
+
+  // Throws on failure so the editor can show the error and stay open.
+  async function handleEditPost(id, text) {
+    const updated = await updatePost(id, text, token);
+    setPosts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    setEditingPostId(null);
   }
 
   function toggleComments(postId) {
@@ -624,8 +816,26 @@ function BlogApp() {
               <div className="post-meta">
                 <div className="student-avatar">{post.author.name.charAt(0).toUpperCase()}</div>
                 <span className="post-author">{post.author.name}</span>
+                {post.edited && <span className="edited-tag">edited</span>}
+                {post.is_own && editingPostId !== post.id && (
+                  <OptionsMenu
+                    label="Post options"
+                    onEdit={() => setEditingPostId(post.id)}
+                    onDelete={() => handleDelete(post.id)}
+                  />
+                )}
               </div>
-              <p className="post-text">{post.text}</p>
+              {editingPostId === post.id ? (
+                <InlineEditor
+                  initialValue={post.text}
+                  maxLength={3000}
+                  rows={4}
+                  onSave={(text) => handleEditPost(post.id, text)}
+                  onCancel={() => setEditingPostId(null)}
+                />
+              ) : (
+                <p className="post-text">{post.text}</p>
+              )}
               <div className="post-actions">
                 <button
                   onClick={() => handleToggleLike(post.id)}
@@ -644,15 +854,6 @@ function BlogApp() {
                   <MessageCircle size={14} />
                   {post.comment_count}
                 </button>
-                {post.is_own && (
-                  <button
-                    onClick={() => handleDelete(post.id)}
-                    className="delete-btn post-delete"
-                    aria-label="Delete post"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                )}
               </div>
               {openComments[post.id] && (
                 <CommentSection

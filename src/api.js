@@ -90,3 +90,19 @@ export function deleteComment(commentId, token) {
     headers: authHeaders(token),
   }).then(handle);
 }
+
+export function updatePost(postId, text, token) {
+  return fetch(`${API_URL}/posts/${postId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    body: JSON.stringify({ text }),
+  }).then(handle);
+}
+
+export function updateComment(commentId, text, token) {
+  return fetch(`${API_URL}/comments/${commentId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    body: JSON.stringify({ text }),
+  }).then(handle);
+}
